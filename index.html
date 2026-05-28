@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仓库管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
+    <script>window.WMS_API_BASE_URL = "https://1437175342-io4eso362j.ap-nanjing.tencentscf.com"; axios.defaults.baseURL = window.WMS_API_BASE_URL;</script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.6.3/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.6.3/dist/index.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }
+        .login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-box { width: 400px; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .login-title { text-align: center; margin-bottom: 30px; color: #333; font-size: 24px; font-weight: bold; }
+        .app-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+        /* ========== 修改1：加宽左侧菜单栏 ========== */
+        #app { min-width: 1180px; }
+        .sidebar {
+    width: 300px !important;
+    min-width: 300px !important;
+    max-width: 300px !important;
+
+    background: #304156;
+    color: white;
+
+    flex-shrink: 0 !important;
+
+    overflow-x: hidden !important;
+}
+        /* ========== 修改结束 ========== */
+        .sidebar-logo {
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    background: #263445;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow: hidden !important;
+}
+        .sidebar-menu { 
+    padding-top: 20px;
+
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+        .menu-item {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    height: 56px;
+    line-height: 56px;
+
+    padding: 0 20px !important;
+
+    font-size: 17px;
+    color: white;
+
+    display: flex !important;
+    align-items: center !important;
+
+    white-space: nowrap !important;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+
+    box-sizing: border-box !important;
+
+    flex-shrink: 0 !important;
+}
+        .menu-item:hover, .menu-item.active { background: #263445; border-left: 4px solid #409eff; }
+        .main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+        .header { height: 60px; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .content { flex: 1; padding: 20px; background: #f5f7fa; overflow-y: auto; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .stat-card { display: inline-block; width: 23%; margin-right: 2%; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); text-align: center; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .stat-card:last-child { margin-right: 0; }
+        .stat-number { font-size: 36px; font-weight: bold; color: #409eff; margin: 10px 0; }
+        .stat-title { color: #666; font-size: 14px; }
+        .low-stock { background: #fef0f0; color: #f56c6c; }
+        .el-table .warning-row { background: #fef0f0; }
+        .login-hint { margin-top: 16px; padding: 12px; background: #f5f7fa; border-radius: 6px; color: #606266; font-size: 13px; line-height: 1.6; word-break: break-all; }
+        .clickable-stat { cursor: pointer; }
+        .clickable-stat:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(64, 158, 255, 0.16); }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center; }
+        .category-select { width: 300px !important; min-width: 0; }
+        .order-dialog { max-width: calc(100vw - 48px); }
+        .order-dialog .el-dialog__body { overflow-x: auto; }
+        .order-items-table { min-width: 1080px; }
+        .number-input-wide { width: 160px; }
+        .number-input-wide .el-input__wrapper { min-width: 72px; }
+        .number-input-wide .el-input__inner { color: #303133; font-size: 14px; min-width: 56px; text-align: center; }
+        .dashboard-grid { 
+    display: grid; 
+    grid-template-columns: 2.4fr 1fr; 
+    gap: 20px; 
+    margin: 20px 0; 
+}
+        .summary-card { background: #f8fafc; border: 1px solid #e5e9f0; border-radius: 8px; padding: 14px; }
+        .summary-row { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid #e5e9f0; color: #606266; }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-row strong { color: #303133; }
+        /* ========== 修改2：统一快速入口按钮宽度 ========== */
+        .quick-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+}
+        .quick-actions .el-button { 
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 48px;
+    font-size: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    align-self: stretch !important;
+}
+        .quick-actions .el-button + .el-button { margin-left: 0 !important; }
+        /* ========== 修改结束 ========== */
+        .material-status { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .stock-warning-text { color: #f56c6c; font-weight: 600; }
+        .stock-ok-text { color: #67c23a; font-weight: 600; }
+        .batch-tip, .form-tip, .tracking-tip {
+            flex-basis: 100%;
+            width: 100%;
+            max-width: 780px;
+            color: #8a9099;
+            font-size: 12px;
+            line-height: 1.45;
+            margin-top: 4px;
+            padding-left: 2px;
+        }
+        .dialog-tip {
+            max-width: 780px;
+            color: #7f8792;
+            font-size: 12px;
+            line-height: 1.5;
+            margin: -2px 0 16px 100px;
+            padding: 7px 10px;
+            background: #f7f9fc;
+            border-radius: 6px;
+        }
+        .order-dialog .form-tip,
+        .order-dialog .tracking-tip,
+        .order-dialog .dialog-tip { max-width: 900px; }
+        .trace-card { border: 1px solid #e5e9f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; }
+        .trace-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
+        .trace-title { font-size: 16px; font-weight: 700; color: #303133; }
+        .trace-meta { color: #606266; font-size: 13px; margin-top: 6px; line-height: 1.6; }
+        .trace-search {
+            display: grid;
+            grid-template-columns: minmax(360px, 1fr) auto auto;
+            gap: 10px;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        .trace-search-tip {
+            color: #606266;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+        @media (max-width: 900px) {
+
+    .app-container {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+    }
+
+    .sidebar {
+        width: 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+
+        flex: 0 0 300px !important;
+
+        overflow: hidden !important;
+    }
+
+    .sidebar-menu {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        padding-top: 20px !important;
+    }
+
+    .menu-item {
+        display: flex !important;
+        width: 100% !important;
+
+        font-size: 17px !important;
+        line-height: 56px !important;
+        height: 56px !important;
+
+        padding-left: 24px !important;
+
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        writing-mode: horizontal-tb !important;
+
+        overflow: hidden !important;
+    }
+
+    .main-container {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .content {
+        overflow-x: auto !important;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .trace-search {
+        grid-template-columns: 1fr !important;
+    }
+}
+        @media (max-width: 520px) {
+            .login-box { width: calc(100% - 24px); padding: 24px; }
+            .stat-card { width: 100%; margin-right: 0; }
+            .header { align-items: flex-start; height: auto; padding: 12px; gap: 8px; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>    
+
+    <div id="app">
+        <!-- 登录页面 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <h2 class="login-title">仓库管理系统</h2>
+                <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef" label-width="80px">
+                    <el-form-item label="用户名" prop="username">
+                        <el-input v-model="loginForm.username" placeholder="请输入用户名"></el-input>
+                    </el-form-item>
+                    <el-form-item label="密码" prop="password">
+                        <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="handleLogin" style="width: 100%;">登录</el-button>
+                    </el-form-item>
+                </el-form>
+                <div class="login-hint" v-if="serverInfo.url">
+                    同事访问地址：{{ serverInfo.url }}<br>
+                    默认账号：admin / 123456
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主界面 -->
+        <div v-else class="app-container">
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <div class="sidebar-logo">仓库管理系统</div>
+                <div class="sidebar-menu">
+                    <div class="menu-item" :class="{active: currentPage === 'dashboard'}" @click="currentPage = 'dashboard'">仪表盘</div>
+                    <div class="menu-item" :class="{active: currentPage === 'materials'}" @click="currentPage = 'materials'">物料管理</div>
+                    <div class="menu-item" :class="{active: currentPage === 'inbound'}" @click="currentPage = 'inbound'">入库管理</div>
+                    <div class="menu-item" :class="{active: currentPage === 'outbound'}" @click="currentPage = 'outbound'">出库管理</div>
+                    <div class="menu-item" :class="{active: currentPage === 'trace'}" @click="currentPage = 'trace'">成品追溯</div>
+                    <div class="menu-item" :class="{active: currentPage === 'inventory'}" @click="currentPage = 'inventory'">库存流水</div>
+                    <div v-if="userRole === 'superadmin' || userRole === 'admin'" class="menu-item" :class="{active: currentPage === 'users'}" @click="currentPage = 'users'">用户管理</div>
+                    <div v-if="userRole === 'superadmin'" class="menu-item" :class="{active: currentPage === 'backup'}" @click="currentPage = 'backup'">备份恢复</div>
+                </div>
+            </div>
+            
+            <!-- 主内容区 -->
+            <div class="main-container">
+                <div class="header">
+                    <span style="font-size: 18px; font-weight: bold;">{{ pageTitle }}</span>
+                    <div>
+                        <span>欢迎您，{{ userName }}</span>
+                        <el-button type="text" @click="handleLogout" style="margin-left: 20px;">退出登录</el-button>
+                    </div>
+                </div>
+                
+                <div class="content">
+                    <!-- 仪表盘页面 -->
+                    <div v-if="currentPage === 'dashboard'">
+                        <div class="stat-card clickable-stat" @click="showInStockMaterials" title="点击查看当前在库物料">
+                            <div class="stat-title">在库物料种类</div>
+                            <div class="stat-number">{{ dashboardData.material_count }}</div>
+                        </div>
+                        <div class="stat-card clickable-stat" @click="showInStockMaterials" title="点击查看当前库存明细">
+                            <div class="stat-title">总库存数量</div>
+                            <div class="stat-number">{{ dashboardData.total_stock }}</div>
+                        </div>
+                        <div class="stat-card low-stock clickable-stat" @click="showLowStockOnly" title="点击查看低库存物料">
+                            <div class="stat-title">低于安全库存</div>
+                            <div class="stat-number">{{ dashboardData.low_stock_count }}</div>
+                        </div>
+                        <div class="stat-card clickable-stat" @click="goApprovals" title="当前版本提交后直接生效">
+                            <div class="stat-title">待处理事项</div>
+                            <div class="stat-number">{{ dashboardData.pending_total || (dashboardData.pending_inbound + dashboardData.pending_outbound) }}</div>
+                        </div>
+
+                        <div class="dashboard-grid">
+                            <div class="card" style="margin-bottom: 0;">
+                                <h3 style="margin-bottom: 15px;">重点待办</h3>
+                                <el-table :data="dashboardData.focus_tasks" stripe style="width: 100%;" empty-text="当前没有库存异常">
+                                    <el-table-column prop="type" label="事项" width="110">
+                                        <template #default="scope">
+                                            <el-tag :type="scope.row.priority === 'high' ? 'danger' : 'warning'">{{ scope.row.type }}</el-tag>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="material_name" label="对象" width="190"></el-table-column>
+                                    <el-table-column prop="detail" label="详情"></el-table-column>
+                                    <el-table-column prop="suggestion" label="建议动作" width="190"></el-table-column>
+                                </el-table>
+                            </div>
+                            <div class="card" style="margin-bottom: 0;">
+                                <h3 style="margin-bottom: 15px;">快速入口</h3>
+                                <div class="quick-actions">
+                                    <el-button type="primary" @click="openInboundDialog">新增入库单</el-button>
+                                    <el-button type="success" @click="openOutboundDialog">新增出库单</el-button>
+                                    <el-button type="danger" plain @click="showLowStockOnly">只看低库存</el-button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="margin-top: 20px;">
+                            <h3 style="margin-bottom: 15px;">所有物料库存</h3>
+                            <div class="toolbar">
+                                <el-input v-model="materialSearch" placeholder="按名称/编码/规格/品牌/分类搜索" style="width: 300px;" @keyup.enter="loadMaterials"></el-input>
+                                <el-select v-model="materialCategoryFilter" placeholder="选择分类" clearable filterable class="category-select">
+                                    <el-option v-for="category in materialCategories" :key="category" :label="category" :value="category"></el-option>
+                                </el-select>
+                                <el-select v-model="materialStockFilter" placeholder="库存状态" clearable style="width: 150px;">
+                                    <el-option label="当前在库" value="in_stock"></el-option>
+                                    <el-option label="只看低库存" value="low"></el-option>
+                                    <el-option label="库存正常" value="normal"></el-option>
+                                </el-select>
+                                <el-button type="primary" @click="loadMaterials">搜索</el-button>
+                            </div>
+                            <el-table :data="materials" stripe style="width: 100%;" :row-class-name="materialRowClassName">
+                                <el-table-column prop="code" label="物料编码" width="120"></el-table-column>
+                                <el-table-column prop="name" label="物料名称" width="180"></el-table-column>
+                                <el-table-column prop="spec" label="规格型号"></el-table-column>
+                                <el-table-column prop="brand" label="品牌" width="120"></el-table-column>
+                                <el-table-column prop="category" label="分类" width="170"></el-table-column>
+                                <el-table-column prop="current_stock" label="当前库存" width="100"></el-table-column>
+                                <el-table-column prop="safety_stock" label="安全库存" width="100"></el-table-column>
+                                <el-table-column prop="unit" label="单位" width="80"></el-table-column>
+                                <el-table-column label="状态" width="140">
+                                    <template #default="scope">
+                                        <div class="material-status">
+                                            <el-tag size="small" :type="scope.row.current_stock < scope.row.safety_stock ? 'danger' : 'success'">
+                                                {{ scope.row.current_stock < scope.row.safety_stock ? '低库存' : '正常' }}
+                                            </el-tag>
+                                            <el-tag size="small" type="info" v-if="scope.row.is_active === false">停用</el-tag>
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="供应商库存" width="120">
+                                    <template #default="scope">
+                                        <el-button size="small" @click="viewMaterialBatches(scope.row)">查看</el-button>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="remark" label="备注"></el-table-column>
+                            </el-table>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="margin-bottom: 15px;">库存预警</h3>
+                            <el-table :data="lowStockMaterials" stripe style="width: 100%;">
+                                <el-table-column prop="code" label="物料编码" width="120"></el-table-column>
+                                <el-table-column prop="name" label="物料名称" width="200"></el-table-column>
+                                <el-table-column prop="spec" label="规格型号"></el-table-column>
+                                <el-table-column prop="current_stock" label="当前库存" width="100"></el-table-column>
+                                <el-table-column prop="safety_stock" label="安全库存" width="100"></el-table-column>
+                            </el-table>
+                        </div>
+                    </div>
+                    
+                    <!-- 物料管理页面 -->
+                    <div v-if="currentPage === 'materials'">
+                        <div style="margin-bottom: 20px;">
+                            <el-input v-model="materialSearch" placeholder="搜索物料名称/编码" style="width: 300px; margin-right: 10px;"></el-input>
+                            <el-select v-model="materialCategoryFilter" placeholder="选择分类" clearable filterable class="category-select" style="margin-right: 10px;">
+                                <el-option v-for="category in materialCategories" :key="category" :label="category" :value="category"></el-option>
+                            </el-select>
+                            <el-select v-model="materialStockFilter" placeholder="库存状态" clearable style="width: 140px; margin-right: 10px;">
+                                <el-option label="当前在库" value="in_stock"></el-option>
+                                <el-option label="只看低库存" value="low"></el-option>
+                                <el-option label="库存正常" value="normal"></el-option>
+                            </el-select>
+                            <el-select v-model="materialActiveFilter" placeholder="启用状态" clearable style="width: 140px; margin-right: 10px;">
+                                <el-option label="启用" value="active"></el-option>
+                                <el-option label="停用" value="inactive"></el-option>
+                            </el-select>
+                            <el-select v-model="materialTrackingFilter" placeholder="追踪方式" clearable style="width: 150px; margin-right: 10px;">
+                                <el-option v-for="method in trackingMethods" :key="method" :label="method" :value="method"></el-option>
+                            </el-select>
+                            <el-button type="primary" @click="loadMaterials">搜索</el-button>
+                            <el-button type="success" @click="openMaterialDialog" style="margin-left: 20px;">新增物料</el-button>
+                        </div>
+
+                        <div class="card" v-if="materialRequests.length">
+                            <h3 style="margin-bottom: 12px;">历史物料申请</h3>
+                            <div class="form-tip" style="margin-bottom: 10px;" v-if="userRole === 'user'">这里显示旧版本提交过的物料申请，新物料现在保存后会直接生效。</div>
+                            <el-table :data="materialRequests" stripe style="width: 100%;" empty-text="暂无物料申请">
+                                <el-table-column prop="name" label="物料名称" width="180"></el-table-column>
+                                <el-table-column prop="spec" label="规格型号"></el-table-column>
+                                <el-table-column prop="brand" label="品牌" width="120"></el-table-column>
+                                <el-table-column prop="category" label="分类" width="170"></el-table-column>
+                                <el-table-column prop="source" label="来源" width="100"></el-table-column>
+                                <el-table-column prop="requested_by" label="申请人" width="110"></el-table-column>
+                                <el-table-column prop="created_at" label="申请时间" width="170"></el-table-column>
+                                <el-table-column label="状态" width="110">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.status === 'approved' ? 'success' : scope.row.status === 'rejected' ? 'danger' : 'warning'">
+                                            {{ scope.row.status === 'approved' ? '已通过' : scope.row.status === 'rejected' ? '已拒绝' : '旧申请' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="code" label="生成编码" width="110">
+                                    <template #default="scope">{{ scope.row.code || '-' }}</template>
+                                </el-table-column>
+                                <el-table-column prop="reject_reason" label="拒绝原因"></el-table-column>
+                            </el-table>
+                        </div>
+                        
+                        <el-table :data="materials" stripe style="width: 100%;" :row-class-name="materialRowClassName">
+                            <el-table-column prop="code" label="物料编码" width="120"></el-table-column>
+                            <el-table-column prop="name" label="物料名称" width="200"></el-table-column>
+                            <el-table-column prop="spec" label="规格型号"></el-table-column>
+                            <el-table-column prop="brand" label="品牌" width="120"></el-table-column>
+                            <el-table-column prop="category" label="分类" width="170"></el-table-column>
+                            <el-table-column prop="source" label="来源" width="100"></el-table-column>
+                            <el-table-column prop="current_stock" label="当前库存" width="100"></el-table-column>
+                            <el-table-column prop="safety_stock" label="安全库存" width="100"></el-table-column>
+                            <el-table-column prop="unit" label="单位" width="80"></el-table-column>
+                            <el-table-column prop="tracking_method" label="追踪方式" width="120"></el-table-column>
+                            <el-table-column prop="default_outbound_method" label="出库方式" width="150"></el-table-column>
+                            <el-table-column label="状态" width="130">
+                                <template #default="scope">
+                                    <div class="material-status">
+                                        <el-tag size="small" :type="scope.row.current_stock < scope.row.safety_stock ? 'danger' : 'success'">
+                                            {{ scope.row.current_stock < scope.row.safety_stock ? '低库存' : '正常' }}
+                                        </el-tag>
+                                        <el-tag size="small" type="info" v-if="scope.row.is_active === false">停用</el-tag>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="供应商库存" width="120">
+                                <template #default="scope">
+                                    <el-button size="small" @click="viewMaterialBatches(scope.row)">查看</el-button>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="remark" label="备注"></el-table-column>
+                            <el-table-column label="操作" width="150" v-if="userRole === 'superadmin' || userRole === 'admin'">
+                                <template #default="scope">
+                                    <el-button size="small" @click="editMaterial(scope.row)">编辑</el-button>
+                                    <el-button size="small" type="danger" @click="deleteMaterial(scope.row)" v-if="userRole === 'superadmin'">删除</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        
+                        <!-- 物料编辑对话框 -->
+                        <el-dialog :title="materialDialogTitle" v-model="showMaterialDialog" width="600px">
+                            <div class="dialog-tip">系统里找不到物料时再新增，能搜到就不要重复建。</div>
+                            <el-form :model="materialForm" :rules="materialRules" ref="materialFormRef" label-width="100px">
+                                <el-form-item label="物料编码" v-if="materialForm.id">
+                                    <el-input v-model="materialForm.code" disabled></el-input>
+                                </el-form-item>
+                                <el-form-item label="物料名称" prop="name">
+                                    <el-input v-model="materialForm.name"></el-input>
+                                </el-form-item>
+                                <el-form-item label="规格型号">
+                                    <el-input v-model="materialForm.spec"></el-input>
+                                </el-form-item>
+                                <el-form-item label="品牌">
+                                    <el-input v-model="materialForm.brand"></el-input>
+                                </el-form-item>
+                                <el-form-item label="分类" prop="category">
+                                    <el-select v-model="materialForm.category" style="width: 100%;" filterable @change="applyDefaultMaterialSource">
+                                        <el-option v-for="category in materialCategories" :key="category" :label="category" :value="category"></el-option>
+                                    </el-select>
+                                    <div class="form-tip">选择最接近的分类，系统会自动推荐来源和编码前缀。</div>
+                                </el-form-item>
+                                <el-form-item label="物料来源">
+                                    <el-select v-model="materialForm.source" style="width: 100%;">
+                                        <el-option v-for="source in materialSources" :key="source" :label="source" :value="source"></el-option>
+                                    </el-select>
+                                    <div class="form-tip">
+                                        系统会根据分类自动推荐来源，不对可以手动修改。{{ materialForm.source }}：{{ getMaterialSourceTip(materialForm.source) }}
+                                    </div>
+                                </el-form-item>
+                                <el-form-item label="单位">
+                                    <el-input v-model="materialForm.unit"></el-input>
+                                </el-form-item>
+                                <el-form-item label="安全库存">
+                                    <el-input-number v-model="materialForm.safety_stock" :min="0" style="width: 100%;"></el-input-number>
+                                    <div class="form-tip">库存低于这个数量时，首页会显示低库存提醒。</div>
+                                </el-form-item>
+                                <el-form-item label="追踪方式">
+                                    <el-select v-model="materialForm.tracking_method" style="width: 100%;">
+                                        <el-option v-for="method in trackingMethods" :key="method" :label="method" :value="method"></el-option>
+                                    </el-select>
+                                    <div v-if="materialForm.tracking_method === '关键件：短批次追溯'" class="tracking-tip">
+                                        关键件需要追到具体批次。入库后请把系统生成的短批次写在包装或料盒上，例如 0525-A，后续出库、售后时才能查到来源。
+                                    </div>
+                                </el-form-item>
+                                <el-form-item label="出库方式">
+                                    <el-select v-model="materialForm.default_outbound_method" style="width: 100%;">
+                                        <el-option v-for="method in outboundMethods" :key="method" :label="method" :value="method"></el-option>
+                                    </el-select>
+                                    <div class="form-tip">一般保持“系统推荐先进先出”，特殊情况再调整。</div>
+                                </el-form-item>
+                                <el-form-item label="启用状态">
+                                    <el-switch v-model="materialForm.is_active" active-text="启用" inactive-text="停用"></el-switch>
+                                    <div class="form-tip">停用后不能用于新增单据，历史记录仍然保留。</div>
+                                </el-form-item>
+                                <el-form-item label="备注">
+                                    <el-input v-model="materialForm.remark" type="textarea"></el-input>
+                                </el-form-item>
+                            </el-form>
+                            <template #footer>
+                                <el-button @click="showMaterialDialog = false">取消</el-button>
+                                <el-button type="primary" @click="saveMaterial">保存</el-button>
+                            </template>
+                        </el-dialog>
+                    </div>
+                    
+                    <!-- 入库管理页面 -->
+                    <div v-if="currentPage === 'inbound'">
+                        <div style="margin-bottom: 20px;">
+                            <el-button type="success" @click="openInboundDialog">新增入库单</el-button>
+                        </div>
+                        
+                        <el-table :data="inboundOrders" stripe style="width: 100%;">
+                            <el-table-column prop="order_no" label="入库单号" width="150"></el-table-column>
+                            <el-table-column prop="supplier" label="供应商" width="200"></el-table-column>
+                            <el-table-column prop="created_by" label="创建人" width="100"></el-table-column>
+                            <el-table-column prop="created_at" label="创建时间" width="180"></el-table-column>
+                            <el-table-column label="状态" width="100">
+    <template #default="scope">
+        <el-tag :type="scope.row.status === 'approved' ? 'success' : scope.row.status === 'rejected' ? 'danger' : 'warning'">
+            {{ scope.row.status === 'approved' ? '已生效' : scope.row.status === 'rejected' ? '已拒绝' : '未生效' }}
+        </el-tag>
+    </template>
+</el-table-column>
+<el-table-column label="操作" width="120">
+    <template #default="scope">
+        <el-button size="small" @click="viewInboundDetails(scope.row)">查看明细</el-button>
+    </template>
+</el-table-column>
+                        </el-table>
+                        
+                        <!-- 新增入库单对话框 -->
+                        <el-dialog title="新增入库单" v-model="showInboundDialog" width="1100px" class="order-dialog">
+                            <div class="dialog-tip">收到货后填写入库单，提交后库存会立即增加。</div>
+                            <el-form :model="inboundForm" label-width="100px">
+                                <el-form-item label="供应商">
+                                    <el-select v-model="inboundForm.supplier" placeholder="选择常用供应商或直接输入" filterable allow-create style="width: 100%;">
+                                        <el-option v-for="supplier in suppliers" :key="supplier.name" :label="supplier.name" :value="supplier.name"></el-option>
+                                    </el-select>
+                                    <div class="form-tip">新供应商可以直接输入，系统会自动记住。</div>
+                                </el-form-item>
+                                <el-form-item label="备注">
+                                    <el-input v-model="inboundForm.remark" type="textarea"></el-input>
+                                </el-form-item>
+                                <el-form-item label="入库明细">
+                                    <el-button size="small" type="primary" @click="addInboundItem" style="margin-bottom: 10px;">添加物料</el-button>
+                                    <div class="form-tip" style="margin-bottom: 10px;">找不到物料时，先在物料管理新增物料。</div>
+                                    <el-table :data="inboundForm.items" border style="width: 100%;" class="order-items-table">
+                                        <el-table-column label="物料" width="300">
+                                            <template #default="scope">
+                                                <el-select v-model="scope.row.material_id" placeholder="选择物料" style="width: 100%;" filterable>
+                                                    <el-option v-for="m in selectableMaterials" :key="m.id" :label="m.name + ' (' + m.code + ')'" :value="m.id"></el-option>
+                                                </el-select>
+                                            </template>
+                                        </el-table-column>
+                                       <el-table-column label="数量" width="170">
+    <template #default="scope">
+        <el-input-number class="number-input-wide" v-model="scope.row.quantity" :min="1" controls-position="right"></el-input-number>
+    </template>
+</el-table-column>
+<el-table-column label="单价" width="170">
+    <template #default="scope">
+        <el-input-number class="number-input-wide" v-model="scope.row.price" :min="0" :precision="2" controls-position="right"></el-input-number>
+    </template>
+</el-table-column>
+                                        <el-table-column label="短批次" width="210">
+                                            <template #default="scope">
+                                                <el-tag type="info">提交后自动生成</el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="操作" width="80">
+                                            <template #default="scope">
+                                                <el-button size="small" type="danger" @click="removeInboundItem(scope.$index)">删除</el-button>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                    <div class="summary-card" style="margin-top: 12px;">
+                                        <div class="summary-row"><span>物料行数</span><strong>{{ inboundForm.items.length }} 行</strong></div>
+                                        <div class="summary-row"><span>入库总数</span><strong>{{ inboundTotalQuantity }} 件</strong></div>
+                                        <div class="summary-row"><span>预估金额</span><strong>{{ inboundTotalAmount.toFixed(2) }}</strong></div>
+                                        <div class="summary-row"><span>短批次</span><strong>系统自动生成，员工只需写在包装/料盒上</strong></div>
+                                        <div class="summary-row"><span>提交后动作</span><strong>自动增加库存并写入流水</strong></div>
+                                    </div>
+                                </el-form-item>
+                            </el-form>
+                            <template #footer>
+                                <el-button @click="showInboundDialog = false">取消</el-button>
+                                <el-button type="primary" @click="saveInboundOrder">提交</el-button>
+                            </template>
+                        </el-dialog>
+                        
+                        <!-- 入库单明细对话框 -->
+                        <el-dialog title="入库单明细" v-model="showInboundDetailDialog" width="700px">
+                            <p><strong>入库单号：</strong>{{ currentInboundOrder.order_no }}</p>
+                            <p><strong>供应商：</strong>{{ currentInboundOrder.supplier }}</p>
+                            <p><strong>创建人：</strong>{{ currentInboundOrder.created_by }}</p>
+                            <p><strong>创建时间：</strong>{{ currentInboundOrder.created_at }}</p>
+                            <p><strong>备注：</strong>{{ currentInboundOrder.remark }}</p>
+                            <h4 style="margin: 20px 0 10px;">入库明细</h4>
+                            <el-table :data="currentInboundOrder.items" stripe style="width: 100%;">
+                                <el-table-column prop="material_code" label="物料编码" width="120"></el-table-column>
+                                <el-table-column prop="material_name" label="物料名称" width="200"></el-table-column>
+                                <el-table-column prop="spec" label="规格型号"></el-table-column>
+                                <el-table-column prop="quantity" label="数量" width="100"></el-table-column>
+                                <el-table-column prop="price" label="单价" width="100"></el-table-column>
+                                <el-table-column prop="batch_no" label="短批次"></el-table-column>
+                            </el-table>
+                        </el-dialog>
+                    </div>
+                    
+                    <!-- 出库管理页面 -->
+                    <div v-if="currentPage === 'outbound'">
+                        <div style="margin-bottom: 20px;">
+                            <el-button type="success" @click="openOutboundDialog">新增出库单</el-button>
+                        </div>
+                        
+                        <el-table :data="outboundOrders" stripe style="width: 100%;">
+                            <el-table-column prop="order_no" label="出库单号" width="150"></el-table-column>
+                            <el-table-column prop="customer" label="客户/部门" width="200"></el-table-column>
+                            <el-table-column prop="outbound_type" label="出库类型" width="120"></el-table-column>
+                            <el-table-column prop="product_batch_no" label="产品批次" width="180"></el-table-column>
+                            <el-table-column prop="product_model" label="产品型号" width="120"></el-table-column>
+                            <el-table-column prop="created_by" label="创建人" width="100"></el-table-column>
+                            <el-table-column prop="created_at" label="创建时间" width="180"></el-table-column>
+                            <el-table-column label="状态" width="100">
+                                <template #default="scope">
+                                    <el-tag :type="scope.row.status === 'approved' ? 'success' : 'warning'">
+                                        {{ scope.row.status === 'approved' ? '已生效' : '未生效' }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="260">
+                                <template #default="scope">
+                                    <el-button size="small" @click="viewOutboundDetails(scope.row)">查看明细</el-button>
+                                    <el-button size="small" type="warning" @click="openSupplementOutboundDialog(scope.row)" v-if="scope.row.status === 'approved' && scope.row.product_batch_no">补领物料</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        
+                        <!-- 新增出库单对话框 -->
+                        <el-dialog title="新增出库单" v-model="showOutboundDialog" width="1100px" class="order-dialog">
+                            <div class="dialog-tip">领料、销售发货、补领和报废都在这里填写，提交后库存会立即减少。</div>
+                            <el-form :model="outboundForm" label-width="100px">
+                                <el-form-item label="出库类型" prop="outbound_type">
+                                    <el-select v-model="outboundForm.outbound_type" style="width: 100%;">
+                                        <el-option label="生产领料" value="生产领料"></el-option>
+                                        <el-option label="销售出库" value="销售出库"></el-option>
+                                        <el-option label="补领出库" value="补领出库" disabled></el-option>
+                                        <el-option label="报废出库" value="报废出库"></el-option>
+                                        <el-option label="其他出库" value="其他出库"></el-option>
+                                    </el-select>
+                                    <div class="form-tip">根据本次用途选择类型，系统会显示对应要填写的信息。</div>
+                                </el-form-item>
+
+                                <template v-if="outboundForm.outbound_type === '生产领料'">
+                                    <el-form-item label="产品类型">
+                                        <el-select v-model="outboundForm.product_type" style="width: 100%;">
+                                            <el-option v-for="type in productTypes" :key="type" :label="type" :value="type"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="产品型号">
+                                        <el-input v-model="outboundForm.product_model" placeholder="例如 FC-V1、DRONE-X1"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="计划数量">
+                                        <el-input-number class="number-input-wide" v-model="outboundForm.planned_quantity" :min="1" controls-position="right"></el-input-number>
+                                    </el-form-item>
+                                    <el-form-item label="目标客户">
+                                        <el-select v-model="outboundForm.customer" placeholder="可选，选择已有客户或直接输入" filterable allow-create clearable style="width: 100%;">
+                                            <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.name"></el-option>
+                                        </el-select>
+                                        <div class="form-tip">还不确定客户可以留空，确定后可在销售出库中绑定客户。</div>
+                                    </el-form-item>
+                                    <el-form-item label="项目名称">
+                                        <el-input v-model="outboundForm.project_name" placeholder="可选"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="产品批次">
+                                        <el-tag type="info">提交后系统自动生成</el-tag>
+                                        <div class="form-tip">用于记录这次领料生产的产品批次，员工不用手写。</div>
+                                    </el-form-item>
+                                </template>
+
+                                <template v-else-if="outboundForm.outbound_type === '销售出库'">
+                                    <el-form-item label="客户公司">
+                                        <el-select v-model="outboundForm.customer" placeholder="选择已有客户或直接输入新客户" filterable allow-create style="width: 100%;">
+                                            <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.name"></el-option>
+                                        </el-select>
+                                        <div class="form-tip">新客户可以直接输入，提交后系统会自动保存。</div>
+                                    </el-form-item>
+                                    <el-form-item label="联系人">
+                                        <el-input v-model="outboundForm.contact" placeholder="可选，新客户会自动保存"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="电话">
+                                        <el-input v-model="outboundForm.phone" placeholder="可选"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="产品类型">
+                                        <el-select v-model="outboundForm.product_type" style="width: 100%;">
+                                            <el-option v-for="type in productTypes" :key="type" :label="type" :value="type"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="产品型号">
+                                        <el-input v-model="outboundForm.product_model" placeholder="例如 FC-V1飞控板、UAV-X1整机"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="产品批次">
+                                        <el-tag type="info">提交后系统自动生成</el-tag>
+                                        <div class="form-tip">用于把客户、产品和本次用料自动关联起来。</div>
+                                    </el-form-item>
+                                    <el-form-item label="销售数量">
+                                        <el-input-number class="number-input-wide" v-model="outboundForm.planned_quantity" :min="1" controls-position="right"></el-input-number>
+                                    </el-form-item>
+                                </template>
+
+                                <template v-else-if="outboundForm.outbound_type === '补领出库'">
+                                    <el-form-item label="原出库单">
+                                        <el-input v-model="outboundForm.related_order_no" disabled></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="客户/部门">
+                                        <el-input v-model="outboundForm.customer" disabled></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="产品型号">
+                                        <el-input v-model="outboundForm.product_model" disabled></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="产品批次">
+                                        <el-input v-model="outboundForm.product_batch_no" disabled></el-input>
+                                        <div class="form-tip">补领物料会自动关联到这个客户和产品批次，追溯和导出时会一起显示。</div>
+                                    </el-form-item>
+                                </template>
+
+                                <template v-else>
+                                    <el-form-item label="部门/用途">
+                                        <el-input v-model="outboundForm.customer" placeholder="例如 研发、测试、报废"></el-input>
+                                    </el-form-item>
+                                </template>
+
+                                <el-form-item label="备注">
+                                    <el-input v-model="outboundForm.remark" type="textarea"></el-input>
+                                </el-form-item>
+                                <el-form-item :label="outboundForm.outbound_type === '销售出库' || outboundForm.outbound_type === '补领出库' ? '用料明细' : '出库明细'">
+                                    <el-button size="small" type="primary" @click="addOutboundItem" style="margin-bottom: 10px;">添加物料</el-button>
+                                    <div class="form-tip" style="margin-bottom: 10px;">系统会先检查库存，提交后按先进先出扣减。</div>
+                                    <el-table :data="outboundForm.items" border style="width: 100%;" class="order-items-table">
+                                        <el-table-column label="物料" width="340">
+                                            <template #default="scope">
+                                                <el-select v-model="scope.row.material_id" placeholder="选择物料" style="width: 100%;" filterable @change="onOutboundMaterialChange(scope.row)">
+                                                    <el-option v-for="m in selectableMaterials" :key="m.id" :label="m.name + ' (' + m.code + ') - 库存:' + m.current_stock" :value="m.id"></el-option>
+                                                </el-select>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="数量" width="170">
+                                            <template #default="scope">
+                                                <el-input-number class="number-input-wide" v-model="scope.row.quantity" :min="1" controls-position="right"></el-input-number>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="供应商来源" width="280">
+                                            <template #default="scope">
+                                                <el-tag type="info">{{ getBatchHint(scope.row) }}</el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="库存提示" width="150">
+                                            <template #default="scope">
+                                                <span :class="getOutboundStockStatus(scope.row).ok ? 'stock-ok-text' : 'stock-warning-text'">
+                                                    {{ getOutboundStockStatus(scope.row).text }}
+                                                </span>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="操作" width="80">
+                                            <template #default="scope">
+                                                <el-button size="small" type="danger" @click="removeOutboundItem(scope.$index)">删除</el-button>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                    <div class="summary-card" style="margin-top: 12px;">
+                                        <div class="summary-row"><span>物料行数</span><strong>{{ outboundForm.items.length }} 行</strong></div>
+                                        <div class="summary-row"><span>出库总数</span><strong>{{ outboundTotalQuantity }} 件</strong></div>
+                                        <div class="summary-row"><span>库存校验</span><strong :class="hasOutboundStockError ? 'stock-warning-text' : 'stock-ok-text'">{{ hasOutboundStockError ? '存在库存不足' : '全部可出库' }}</strong></div>
+                                        <div class="summary-row"><span>扣减规则</span><strong>系统按入库时间自动先进先出，自动绑定供应商来源</strong></div>
+                                        <div class="summary-row"><span>提交后动作</span><strong>{{ outboundForm.outbound_type === '销售出库' ? '扣减配件库存，生成产品批次并绑定客户' : outboundForm.outbound_type === '生产领料' ? '扣减库存并生成产品批次' : outboundForm.outbound_type === '补领出库' ? '扣减库存并关联到原客户和产品批次' : '自动扣减库存并写入流水' }}</strong></div>
+                                    </div>
+                                </el-form-item>
+                                <div class="summary-card" v-if="outboundForm.outbound_type === '销售出库'">
+                                    <div class="summary-row"><span>销售产品</span><strong>{{ outboundForm.product_model || '请填写产品型号' }}</strong></div>
+                                    <div class="summary-row"><span>产品批次</span><strong>提交后系统自动生成</strong></div>
+                                    <div class="summary-row"><span>销售数量</span><strong>{{ outboundForm.planned_quantity || 0 }} 件</strong></div>
+                                    <div class="summary-row"><span>提交后动作</span><strong>按用料明细扣库存，并记录每个配件来自哪家供应商</strong></div>
+                                </div>
+                            </el-form>
+                            <template #footer>
+                                <el-button @click="showOutboundDialog = false">取消</el-button>
+                                <el-button type="primary" @click="saveOutboundOrder">提交</el-button>
+                            </template>
+                        </el-dialog>
+                        
+                        <!-- 出库单明细对话框 -->
+                        <el-dialog title="出库单明细" v-model="showOutboundDetailDialog" width="700px">
+                            <p><strong>出库单号：</strong>{{ currentOutboundOrder.order_no }}</p>
+                            <p v-if="currentOutboundOrder.related_order_no"><strong>关联原单：</strong>{{ currentOutboundOrder.related_order_no }}</p>
+                            <p><strong>客户/部门：</strong>{{ currentOutboundOrder.customer }}</p>
+                            <p><strong>出库类型：</strong>{{ currentOutboundOrder.outbound_type }}</p>
+                            <p v-if="currentOutboundOrder.product_batch_no"><strong>产品批次：</strong>{{ currentOutboundOrder.product_batch_no }}</p>
+                            <p v-if="currentOutboundOrder.product_model"><strong>产品型号：</strong>{{ currentOutboundOrder.product_model }}</p>
+                            <p v-if="currentOutboundOrder.planned_quantity"><strong>数量：</strong>{{ currentOutboundOrder.planned_quantity }}</p>
+                            <p v-if="currentOutboundOrder.project_name"><strong>项目名称：</strong>{{ currentOutboundOrder.project_name }}</p>
+                            <p><strong>创建人：</strong>{{ currentOutboundOrder.created_by }}</p>
+                            <p><strong>创建时间：</strong>{{ currentOutboundOrder.created_at }}</p>
+                            <p><strong>备注：</strong>{{ currentOutboundOrder.remark }}</p>
+                            <h4 style="margin: 20px 0 10px;" v-if="currentOutboundOrder.items && currentOutboundOrder.items.length">出库明细</h4>
+                            <el-table v-if="currentOutboundOrder.items && currentOutboundOrder.items.length" :data="currentOutboundOrder.items" stripe style="width: 100%;">
+                                <el-table-column prop="material_code" label="物料编码" width="120"></el-table-column>
+                                <el-table-column prop="material_name" label="物料名称" width="200"></el-table-column>
+                                <el-table-column prop="spec" label="规格型号"></el-table-column>
+                                <el-table-column prop="quantity" label="数量" width="100"></el-table-column>
+                                <el-table-column prop="batch_no" label="短批次"></el-table-column>
+                            </el-table>
+                        </el-dialog>
+                    </div>
+                    
+                    <!-- 成品追溯页面 -->
+                    <div v-if="currentPage === 'trace'">
+                        <div class="card">
+                            <h3 style="margin-bottom: 15px;">成品追溯</h3>
+                            <div class="trace-search">
+                                <el-input
+                                    v-model="traceKeyword"
+                                    placeholder="输入客户公司、销售单号、产品批次、产品型号、物料名称/编码/规格、短批次或供应商"
+                                    clearable
+                                    @keyup.enter="loadTrace">
+                                </el-input>
+                                <el-button type="primary" @click="loadTrace">查询</el-button>
+                                <el-button @click="resetTraceFilters">重置</el-button>
+                            </div>
+                            <el-empty v-if="traceResults.length === 0" description="暂无追溯结果"></el-empty>
+                            <div v-for="item in traceResults" :key="item.product_batch_no" class="trace-card">
+                                <div class="trace-head">
+                                    <div>
+                                        <div class="trace-title">{{ item.product_model }} / {{ item.product_batch_no }}</div>
+                                        <div class="trace-meta">
+                                            产品类型：{{ item.product_type || '-' }}　计划数量：{{ item.planned_quantity || 0 }}　状态：{{ item.status || '-' }}<br>
+                                            目标客户：{{ item.target_customer || '-' }}　销售客户：{{ item.sales_customer || '-' }}　项目：{{ item.project_name || '-' }}
+                                        </div>
+                                    </div>
+                                    <el-tag :type="item.status === '已销售' ? 'success' : item.status === '部分销售' ? 'warning' : 'info'">{{ item.status || '已领料' }}</el-tag>
+                                </div>
+                                <h4 style="margin: 10px 0;">用料配件</h4>
+                                <el-table :data="item.materials" border size="small" style="width: 100%;">
+                                    <el-table-column prop="outbound_type" label="类型" width="100"></el-table-column>
+                                    <el-table-column prop="order_no" label="出库单号" width="150"></el-table-column>
+                                    <el-table-column prop="material_code" label="编码" width="120"></el-table-column>
+                                    <el-table-column prop="material_name" label="物料" width="180"></el-table-column>
+                                    <el-table-column prop="spec" label="规格型号"></el-table-column>
+                                    <el-table-column prop="quantity" label="数量" width="90"></el-table-column>
+                                    <el-table-column prop="batch_no" label="短批次" width="180"></el-table-column>
+                                    <el-table-column prop="supplier" label="供应商" width="180"></el-table-column>
+                                </el-table>
+                                <h4 style="margin: 14px 0 10px;">销售记录</h4>
+                                <el-table :data="item.sales_orders" border size="small" style="width: 100%;" empty-text="暂未销售出库">
+                                    <el-table-column prop="order_no" label="销售单号" width="150"></el-table-column>
+                                    <el-table-column prop="customer" label="客户" width="220"></el-table-column>
+                                    <el-table-column prop="quantity" label="数量" width="90"></el-table-column>
+                                    <el-table-column prop="created_at" label="时间" width="180"></el-table-column>
+                                    <el-table-column prop="remark" label="备注"></el-table-column>
+                                </el-table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 库存流水页面 -->
+                    <div v-if="currentPage === 'inventory'">
+                        <div class="card">
+                            <h3 style="margin-bottom: 15px;">库存流水</h3>
+                            <div class="toolbar">
+                                <el-input v-model="inventoryFilters.search" placeholder="物料/编码/规格/单据/批次" style="width: 260px;" @keyup.enter="loadInventoryLogs"></el-input>
+                                <el-select v-model="inventoryFilters.operation_type" placeholder="类型" clearable style="width: 130px;">
+                                    <el-option label="入库" value="入库"></el-option>
+                                    <el-option label="出库" value="出库"></el-option>
+                                </el-select>
+                                <el-input v-model="inventoryFilters.order_no" placeholder="单据号" style="width: 180px;" @keyup.enter="loadInventoryLogs"></el-input>
+                                <el-input v-model="inventoryFilters.batch_no" placeholder="物料短批次" style="width: 170px;" @keyup.enter="loadInventoryLogs"></el-input>
+                                <el-input v-model="inventoryFilters.product_batch_no" placeholder="产品批次" style="width: 190px;" @keyup.enter="loadInventoryLogs"></el-input>
+                                <el-button type="primary" @click="loadInventoryLogs">查询</el-button>
+                                <el-button @click="resetInventoryFilters">重置</el-button>
+                                <el-button type="success" @click="exportInventoryLedger">导出库存台账</el-button>
+                            </div>
+                            <div class="batch-tip" style="margin-bottom: 10px;">当前显示 {{ inventoryLogs.length }} 条流水记录。</div>
+                            <el-table :data="inventoryLogs" stripe style="width: 100%;">
+                                <el-table-column prop="material_code" label="物料编码" width="120"></el-table-column>
+                                <el-table-column prop="material_name" label="物料名称" width="200"></el-table-column>
+                                <el-table-column prop="quantity" label="变动数量" width="100"></el-table-column>
+                                <el-table-column prop="order_no" label="单据号" width="150"></el-table-column>
+                                <el-table-column prop="operation_type" label="操作类型" width="100"></el-table-column>
+                                <el-table-column prop="batch_no" label="物料短批次" width="170"></el-table-column>
+                                <el-table-column prop="product_batch_no" label="产品批次" width="180"></el-table-column>
+                                <el-table-column prop="operator" label="操作人" width="120"></el-table-column>
+                                <el-table-column prop="created_at" label="时间"></el-table-column>
+                            </el-table>
+                        </div>
+                    </div>
+
+                    <el-dialog :title="'供应商库存 - ' + (currentBatchMaterial.name || '')" v-model="showBatchDialog" width="850px">
+                        <el-table :data="materialBatchDetails" stripe style="width: 100%;" empty-text="暂无供应商库存">
+                            <el-table-column prop="supplier" label="供应商" width="180"></el-table-column>
+                            <el-table-column prop="remaining_quantity" label="剩余库存" width="100"></el-table-column>
+                            <el-table-column prop="quantity_in" label="入库数量" width="100"></el-table-column>
+                            <el-table-column prop="inbound_order_no" label="入库单号" width="170"></el-table-column>
+                            <el-table-column prop="short_batch_no" label="系统批次" width="110"></el-table-column>
+                            <el-table-column prop="created_at" label="入库时间"></el-table-column>
+                        </el-table>
+                    </el-dialog>
+                    
+                    <!-- 客户管理页面 -->
+                    <div v-if="currentPage === 'customers'">
+                        <div style="margin-bottom: 20px;">
+                            <el-button type="success" @click="showCustomerDialog = true" v-if="userRole === 'superadmin' || userRole === 'admin'">新增客户</el-button>
+                        </div>
+                        
+                        <el-table :data="customers" stripe style="width: 100%;">
+                            <el-table-column prop="name" label="客户名称" width="200"></el-table-column>
+                            <el-table-column prop="contact" label="联系人" width="120"></el-table-column>
+                            <el-table-column prop="phone" label="电话" width="150"></el-table-column>
+                            <el-table-column prop="address" label="地址"></el-table-column>
+                            <el-table-column prop="remark" label="备注"></el-table-column>
+                            <el-table-column label="操作" width="150" v-if="userRole === 'superadmin' || userRole === 'admin'">
+                                <template #default="scope">
+                                    <el-button size="small" @click="editCustomer(scope.row)">编辑</el-button>
+                                    <el-button size="small" type="danger" @click="deleteCustomer(scope.row)" v-if="userRole === 'superadmin'">删除</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        
+                        <!-- 客户编辑对话框 -->
+                        <el-dialog :title="customerDialogTitle" v-model="showCustomerDialog" width="600px">
+                            <el-form :model="customerForm" ref="customerFormRef" label-width="100px">
+                                <el-form-item label="客户名称" prop="name">
+                                    <el-input v-model="customerForm.name"></el-input>
+                                </el-form-item>
+                                <el-form-item label="联系人">
+                                    <el-input v-model="customerForm.contact"></el-input>
+                                </el-form-item>
+                                <el-form-item label="电话">
+                                    <el-input v-model="customerForm.phone"></el-input>
+                                </el-form-item>
+                                <el-form-item label="地址">
+                                    <el-input v-model="customerForm.address"></el-input>
+                                </el-form-item>
+                                <el-form-item label="备注">
+                                    <el-input v-model="customerForm.remark" type="textarea"></el-input>
+                                </el-form-item>
+                            </el-form>
+                            <template #footer>
+                                <el-button @click="showCustomerDialog = false">取消</el-button>
+                                <el-button type="primary" @click="saveCustomer">保存</el-button>
+                            </template>
+                        </el-dialog>
+                    </div>
+                    
+                    <!-- 用户管理页面 -->
+                    <div v-if="currentPage === 'users'">
+                        <div style="margin-bottom: 20px;">
+                            <el-button type="success" @click="showUserDialog = true">新增用户</el-button>
+                        </div>
+                        
+                        <el-table :data="users" stripe style="width: 100%;">
+                            <el-table-column prop="username" label="用户名" width="150"></el-table-column>
+                            <el-table-column prop="full_name" label="姓名" width="150"></el-table-column>
+                            <el-table-column prop="role" label="角色" width="120">
+                                <template #default="scope">
+                                    <el-tag :type="scope.row.role === 'superadmin' ? 'danger' : scope.row.role === 'admin' ? 'primary' : 'success'">
+                                        {{ scope.row.role === 'superadmin' ? '超级管理员' : scope.row.role === 'admin' ? '管理员' : '普通用户' }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="150">
+                                <template #default="scope">
+                                    <el-button size="small" type="danger" @click="deleteUser(scope.row)" v-if="userRole === 'superadmin' || (userRole === 'admin' && scope.row.role !== 'superadmin')">删除</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        
+                        <!-- 用户编辑对话框 -->
+                        <el-dialog title="新增用户" v-model="showUserDialog" width="500px">
+                            <el-form :model="userForm" :rules="userRules" ref="userFormRef" label-width="100px">
+                                <el-form-item label="用户名" prop="username">
+                                    <el-input v-model="userForm.username"></el-input>
+                                </el-form-item>
+                                <el-form-item label="姓名" prop="full_name">
+                                    <el-input v-model="userForm.full_name"></el-input>
+                                </el-form-item>
+                                <el-form-item label="密码" prop="password">
+                                    <el-input v-model="userForm.password" type="password"></el-input>
+                                </el-form-item>
+                                <el-form-item label="角色" prop="role">
+                                    <el-select v-model="userForm.role" style="width: 100%;">
+                                        <el-option label="普通用户" value="user"></el-option>
+                                        <el-option label="管理员" value="admin"></el-option>
+                                        <el-option label="超级管理员" value="superadmin" v-if="userRole === 'superadmin'"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-form>
+                            <template #footer>
+                                <el-button @click="showUserDialog = false">取消</el-button>
+                                <el-button type="primary" @click="saveUser">保存</el-button>
+                            </template>
+                        </el-dialog>
+                    </div>
+                    
+                    <!-- 备份恢复页面 -->
+                    <div v-if="currentPage === 'backup'">
+                        <div class="card">
+                            <h3 style="margin-bottom: 20px;">数据备份</h3>
+                            <p style="margin-bottom: 20px;">点击下面的按钮，下载整个数据库的备份文件。备份文件包含所有物料、出入库记录和用户信息。</p>
+                            <el-button type="primary" @click="backupDatabase">下载备份文件</el-button>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-bottom: 20px;">数据恢复</h3>
+                            <p style="margin-bottom: 20px;">上传之前下载的 .db 备份文件，系统会先自动保留一份恢复前备份。</p>
+                            <el-upload :show-file-list="false" :before-upload="restoreDatabase">
+                                <el-button type="warning">上传备份并恢复</el-button>
+                            </el-upload>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: false,
+                    token: '',
+                    userRole: '',
+                    userName: '',
+                    serverInfo: {},
+                    currentPage: 'dashboard',
+                    loginForm: {
+                        username: '',
+                        password: ''
+                    },
+                    loginRules: {
+                        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+                        password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+                    },
+                    dashboardData: {
+                        material_count: 0,
+                        total_stock: 0,
+                        low_stock_count: 0,
+                        pending_inbound: 0,
+                        pending_outbound: 0,
+                        pending_material_requests: 0,
+                        focus_tasks: [],
+                        recent_operations: []
+                    },
+                    lowStockMaterials: [],
+                    materials: [],
+                    selectableMaterials: [],
+                    materialSearch: '',
+                    materialCategoryFilter: '',
+                    materialStockFilter: '',
+                    materialActiveFilter: '',
+                    materialTrackingFilter: '',
+                    materialCategories: [
+                        '芯片IC/核心器件',
+                        '阻容感/基础器件',
+                        '传感器/IMU/GNSS',
+                        '通信/射频模块',
+                        '电源/电池/充电',
+                        'PCB/电路板',
+                        '连接器/线束',
+                        '结构件/机加工件',
+                        '动力系统/电机电调桨',
+                        '飞控成品',
+                        '无人机整机/套件',
+                        '工具/工装/测试设备',
+                        '耗材/辅料',
+                        '包装/标签',
+                        '其他'
+                    ],
+                    trackingMethods: ['关键件：短批次追溯', '普通件：自动先进先出', '耗材工具：不追溯'],
+                    outboundMethods: ['系统推荐先进先出', '手动选择批次', '不限制'],
+                    productTypes: ['飞控板', '整机无人机', '测试样机', '其他'],
+                    materialSources: ['外购', '自研自制', '委外加工', '客供'],
+                    materialSourceTips: {
+                        '外购': '从供应商买来的物料，例如芯片、电机、电池、工具、耗材、GPS模块、线束等。',
+                        '自研自制': '公司自己研发、焊接、装配或测试完成的物料/产品，例如自研飞控板、测试合格整机、公司组装套件等。',
+                        '委外加工': '公司提供图纸、PCB文件或加工要求，由外部厂家加工后交付，例如PCB打样、结构件机加工、外协焊接PCBA等。',
+                        '客供': '不是公司采购的物料，而是客户提供给公司用于测试、维修、装配或项目使用的物料，例如客户寄来的飞控板、整机、样品模块、返修件等。'
+                    },
+                    categorySourceMap: {
+                        '芯片IC/核心器件': '外购',
+                        '电子元器件': '外购',
+                        '阻容感/基础器件': '外购',
+                        '传感器/IMU/GNSS': '外购',
+                        '通信/射频模块': '外购',
+                        '电源/电池/充电': '外购',
+                        '连接器/线束': '外购',
+                        '紧固件/标准件': '外购',
+                        '动力系统/电机电调桨': '外购',
+                        '工具/工装/测试设备': '外购',
+                        '耗材/辅料': '外购',
+                        '包装/标签': '外购',
+                        '其他': '外购',
+                        'PCB/电路板': '委外加工',
+                        '结构件/机加工件': '委外加工',
+                        'PCBA/飞控板': '自研自制',
+                        '飞控成品': '自研自制',
+                        '无人机整机/套件': '自研自制'
+                    },
+                    materialRequests: [],
+                    showMaterialDialog: false,
+                    materialDialogTitle: '新增物料',
+                    materialForm: {
+                        id: null,
+                        code: '',
+                        name: '',
+                        spec: '',
+                        brand: '',
+                        category: '',
+                        source: '外购',
+                        unit: '个',
+                        safety_stock: 0,
+                        tracking_method: '普通件：自动先进先出',
+                        default_outbound_method: '系统推荐先进先出',
+                        is_active: true,
+                        remark: ''
+                    },
+                    materialRules: {
+                        name: [{ required: true, message: '请输入物料名称', trigger: 'blur' }],
+                        category: [{ required: true, message: '请选择分类', trigger: 'change' }]
+                    },
+                    inboundOrders: [],
+                    showInboundDialog: false,
+                    inboundForm: {
+                        supplier: '',
+                        remark: '',
+                        items: []
+                    },
+                    showInboundDetailDialog: false,
+                    currentInboundOrder: {},
+                    outboundOrders: [],
+                    showOutboundDialog: false,
+                    outboundForm: {
+                        customer: '',
+                        outbound_type: '',
+                        product_type: '',
+                        product_model: '',
+                        product_batch_no: '',
+                        planned_quantity: 1,
+                        project_name: '',
+                        contact: '',
+                        phone: '',
+                        related_order_no: '',
+                        remark: '',
+                        items: []
+                    },
+                    showOutboundDetailDialog: false,
+                    currentOutboundOrder: {},
+                    productBatches: [],
+                    materialBatchOptions: {},
+                    suppliers: [],
+                    showBatchDialog: false,
+                    currentBatchMaterial: {},
+                    materialBatchDetails: [],
+                    traceKeyword: '',
+                    traceResults: [],
+                    inventoryLogs: [],
+                    inventoryFilters: {
+                        search: '',
+                        operation_type: '',
+                        order_no: '',
+                        batch_no: '',
+                        product_batch_no: ''
+                    },
+                    customers: [],
+                    showCustomerDialog: false,
+                    customerDialogTitle: '新增客户',
+                    customerForm: {
+                        id: null,
+                        name: '',
+                        contact: '',
+                        phone: '',
+                        address: '',
+                        remark: ''
+                    },
+                    users: [],
+                    showUserDialog: false,
+                    userForm: {
+                        username: '',
+                        full_name: '',
+                        password: '',
+                        role: 'user'
+                    },
+                    userRules: {
+                        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+                        full_name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+                        password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+                        role: [{ required: true, message: '请选择角色', trigger: 'change' }]
+                    }
+                }
+            },
+            computed: {
+                pageTitle() {
+                    const titles = {
+                        dashboard: '仪表盘',
+                        materials: '物料管理',
+                        inbound: '入库管理',
+                        outbound: '出库管理',
+                        trace: '成品追溯',
+                        inventory: '库存流水',
+                        users: '用户管理',
+                        backup: '备份恢复'
+                    };
+                    return titles[this.currentPage] || '仪表盘';
+                },
+                activeMaterials() {
+                    return this.materials.filter(m => m.is_active !== false);
+                },
+                inboundTotalQuantity() {
+                    return this.inboundForm.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+                },
+                inboundTotalAmount() {
+                    return this.inboundForm.items.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.price) || 0)), 0);
+                },
+                outboundTotalQuantity() {
+                    return this.outboundForm.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+                },
+                hasOutboundStockError() {
+                    return this.outboundForm.items.some(item => !this.getOutboundStockStatus(item).ok);
+                },
+                traceKeywordPlaceholder() {
+                    return '输入客户、订单、产品、物料、短批次或供应商';
+                }
+            },
+            watch: {
+                currentPage() {
+                    if (this.currentPage === 'dashboard') {
+                        this.loadDashboardData();
+                    } else if (this.currentPage === 'materials') {
+                        this.loadMaterials();
+                        this.loadMaterialRequests();
+                    } else if (this.currentPage === 'inbound') {
+                        this.loadInboundOrders();
+                    } else if (this.currentPage === 'outbound') {
+                        this.loadOutboundOrders();
+                        this.loadCustomers();
+                        this.loadProductBatches();
+                    } else if (this.currentPage === 'trace') {
+                        this.loadTrace();
+                    } else if (this.currentPage === 'inventory') {
+                        this.loadInventoryLogs();
+                    } else if (this.currentPage === 'users') {
+                        this.loadUsers();
+                    }
+                }
+            },
+            methods: {
+                async loadServerInfo() {
+                    try {
+                        const res = await axios.get('/api/server-info');
+                        this.serverInfo = res.data;
+                    } catch (err) {
+                        this.serverInfo = {};
+                    }
+                },
+                async handleLogin() {
+                    try {
+                        const formData = new FormData();
+                        formData.append('username', this.loginForm.username);
+                        formData.append('password', this.loginForm.password);
+                        
+                        const res = await axios.post('/token', formData);
+                        this.token = res.data.access_token;
+                        this.userRole = res.data.user_role;
+                        this.userName = res.data.user_name;
+                        this.isLoggedIn = true;
+                        
+                        localStorage.setItem('token', this.token);
+                        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+                        
+                        await this.loadDashboardData();
+                        await this.loadMaterials();
+                        await this.loadMaterialRequests();
+                        await this.loadSelectableMaterials();
+                        await this.loadCustomers();
+                        await this.loadProductBatches();
+                        await this.loadSuppliers();
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '用户名或密码错误');
+                    }
+                },
+                handleLogout() {
+                    this.isLoggedIn = false;
+                    this.token = '';
+                    this.userRole = '';
+                    this.userName = '';
+                    localStorage.removeItem('token');
+                    delete axios.defaults.headers.common['Authorization'];
+                },
+                async loadDashboardData() {
+                    try {
+                        const res = await axios.get('/api/dashboard');
+                        this.dashboardData = res.data;
+                        
+                        const alertsRes = await axios.get('/api/inventory/alerts');
+                        this.lowStockMaterials = alertsRes.data;
+                    } catch (err) {
+                        if (err.response?.status === 401) {
+                            this.handleLogout();
+                            this.$message.error('登录已过期，请重新登录');
+                        } else {
+                            this.$message.error(err.response?.data?.detail || '加载仪表盘数据失败');
+                        }
+                    }
+                },
+                async loadMaterials() {
+                    try {
+                        const res = await axios.get('/api/materials', {
+                            params: {
+                                category: this.materialCategoryFilter,
+                                search: this.materialSearch,
+                                stock_status: this.materialStockFilter,
+                                active_status: this.materialActiveFilter,
+                                tracking_method: this.materialTrackingFilter
+                            }
+                        });
+                        this.materials = res.data;
+                    } catch (err) {
+                        this.$message.error('加载物料数据失败');
+                    }
+                },
+                async loadMaterialRequests() {
+                    try {
+                        const params = (this.userRole === 'superadmin' || this.userRole === 'admin') ? { status: 'pending' } : {};
+                        const res = await axios.get('/api/material-requests', { params });
+                        this.materialRequests = res.data;
+                    } catch (err) {
+                        this.materialRequests = [];
+                    }
+                },
+                async loadSelectableMaterials() {
+                    try {
+                        const res = await axios.get('/api/materials', {
+                            params: { active_status: 'active' }
+                        });
+                        this.selectableMaterials = res.data;
+                    } catch (err) {
+                        this.$message.error('加载可选物料失败');
+                    }
+                },
+                async loadSuppliers() {
+                    try {
+                        const res = await axios.get('/api/suppliers');
+                        this.suppliers = res.data;
+                    } catch (err) {
+                        this.suppliers = [];
+                    }
+                },
+                getMaterialById(materialId) {
+                    return [...this.selectableMaterials, ...this.materials].find(m => m.id === materialId);
+                },
+                async loadProductBatches() {
+                    try {
+                        const res = await axios.get('/api/product-batches');
+                        this.productBatches = res.data;
+                    } catch (err) {
+                        this.$message.error('加载产品批次失败');
+                    }
+                },
+                getProductBatchRemaining(batch) {
+                    return Math.max((Number(batch.planned_quantity) || 0) - (Number(batch.sales_quantity) || 0), 0);
+                },
+                fillProductBatchInfo() {
+                    const batch = this.productBatches.find(b => b.product_batch_no === this.outboundForm.product_batch_no);
+                    if (!batch) {
+                        return;
+                    }
+                    this.outboundForm.product_type = batch.product_type || '';
+                    this.outboundForm.product_model = batch.product_model || '';
+                    if (!this.outboundForm.planned_quantity || this.outboundForm.planned_quantity < 1) {
+                        this.outboundForm.planned_quantity = this.getProductBatchRemaining(batch) || 1;
+                    }
+                },
+                async loadMaterialBatches(materialId) {
+                    if (!materialId) {
+                        return [];
+                    }
+                    try {
+                        const res = await axios.get(`/api/materials/${materialId}/batches`);
+                        this.materialBatchOptions = { ...this.materialBatchOptions, [materialId]: res.data };
+                        return res.data;
+                    } catch (err) {
+                        this.$message.error('加载短批次失败');
+                        return [];
+                    }
+                },
+                getBatchOptions(materialId) {
+                    return this.materialBatchOptions[materialId] || [];
+                },
+                async onOutboundMaterialChange(row) {
+                    row.batch_no = '';
+                    const material = this.getMaterialById(row.material_id);
+                    if (!material) {
+                        return;
+                    }
+                    await this.loadMaterialBatches(row.material_id);
+                },
+                getBatchHint(row) {
+                    const material = this.getMaterialById(row.material_id);
+                    if (!material) {
+                        return '先选物料';
+                    }
+                    return '系统自动先进先出';
+                },
+                async viewMaterialBatches(row) {
+                    this.currentBatchMaterial = row;
+                    this.showBatchDialog = true;
+                    try {
+                        const res = await axios.get(`/api/materials/${row.id}/batches`);
+                        this.materialBatchDetails = res.data;
+                    } catch (err) {
+                        this.materialBatchDetails = [];
+                        this.$message.error('加载供应商库存失败');
+                    }
+                },
+                getOutboundStockStatus(item) {
+                    const material = this.getMaterialById(item.material_id);
+                    if (!item.material_id) {
+                        return { ok: true, text: '请选择物料' };
+                    }
+                    if (!material) {
+                        return { ok: false, text: '物料不存在' };
+                    }
+                    const quantity = Number(item.quantity) || 0;
+                    if (quantity > material.current_stock) {
+                        return { ok: false, text: `不足，可用 ${material.current_stock}` };
+                    }
+                    return { ok: true, text: `可用 ${material.current_stock}` };
+                },
+                materialRowClassName({ row }) {
+                    if (row.current_stock < row.safety_stock) {
+                        return 'warning-row';
+                    }
+                    return '';
+                },
+                goApprovals() {
+                    if ((this.dashboardData.pending_inbound || 0) > 0) {
+                        this.currentPage = 'inbound';
+                    } else if ((this.dashboardData.pending_outbound || 0) > 0) {
+                        this.currentPage = 'outbound';
+                    } else if ((this.dashboardData.pending_material_requests || 0) > 0) {
+                        this.currentPage = 'materials';
+                    } else {
+                        this.$message.info('当前版本提交后直接生效，没有待审批单据');
+                    }
+                },
+                showInStockMaterials() {
+                    this.materialSearch = '';
+                    this.materialCategoryFilter = '';
+                    this.materialStockFilter = 'in_stock';
+                    this.materialActiveFilter = 'active';
+                    this.materialTrackingFilter = '';
+                    this.currentPage = 'materials';
+                    this.loadMaterials();
+                },
+                showLowStockOnly() {
+                    this.materialSearch = '';
+                    this.materialCategoryFilter = '';
+                    this.materialStockFilter = 'low';
+                    this.materialActiveFilter = 'active';
+                    this.materialTrackingFilter = '';
+                    this.currentPage = 'materials';
+                    this.loadMaterials();
+                },
+                resetMaterialForm() {
+                    this.materialForm = {
+                        id: null,
+                        code: '',
+                        name: '',
+                        spec: '',
+                        brand: '',
+                        category: '',
+                        source: '外购',
+                        unit: '个',
+                        safety_stock: 0,
+                        tracking_method: '普通件：自动先进先出',
+                        default_outbound_method: '系统推荐先进先出',
+                        is_active: true,
+                        remark: ''
+                    };
+                },
+                openMaterialDialog() {
+                    this.materialDialogTitle = '新增物料';
+                    this.resetMaterialForm();
+                    this.showMaterialDialog = true;
+                },
+                editMaterial(row) {
+                    this.materialDialogTitle = '编辑物料';
+                    this.materialForm = {
+                        ...row,
+                        source: row.source || this.getDefaultMaterialSource(row.category),
+                        tracking_method: row.tracking_method || '普通件：自动先进先出',
+                        default_outbound_method: row.default_outbound_method || '系统推荐先进先出',
+                        is_active: row.is_active !== false
+                    };
+                    this.showMaterialDialog = true;
+                },
+                getDefaultMaterialSource(category) {
+                    return this.categorySourceMap[category] || '外购';
+                },
+                getMaterialSourceTip(source) {
+                    return this.materialSourceTips[source] || '';
+                },
+                applyDefaultMaterialSource() {
+                    this.materialForm.source = this.getDefaultMaterialSource(this.materialForm.category);
+                },
+                async saveMaterial() {
+                    try {
+                        if (this.materialForm.id) {
+                            await axios.put(`/api/materials/${this.materialForm.id}`, this.materialForm);
+                            this.$message.success('物料更新成功');
+                        } else {
+                            await axios.post('/api/materials', this.materialForm);
+                            this.$message.success('物料创建成功，已生效');
+                        }
+                        this.showMaterialDialog = false;
+                        this.loadMaterials();
+                        this.loadMaterialRequests();
+                        this.loadSelectableMaterials();
+                        this.loadDashboardData();
+                    } catch (err) {
+                        this.$message.error(err.response.data.detail || '保存失败');
+                    }
+                },
+                async approveMaterialRequest(row) {
+                    if (!confirm('确定通过这个物料申请吗？通过后系统会自动生成物料编码，并加入正式物料库。')) {
+                        return;
+                    }
+                    try {
+                        await axios.post(`/api/material-requests/${row.id}/approve`);
+                        this.$message.success('物料申请已通过');
+                        this.loadMaterialRequests();
+                        this.loadMaterials();
+                        this.loadSelectableMaterials();
+                        this.loadDashboardData();
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '审批失败');
+                    }
+                },
+                async rejectMaterialRequest(row) {
+                    const reason = prompt('请输入拒绝原因：', '');
+                    if (reason === null) {
+                        return;
+                    }
+                    try {
+                        await axios.post(`/api/material-requests/${row.id}/reject`, null, { params: { reason: reason || '未填写原因' } });
+                        this.$message.success('已拒绝');
+                        this.loadMaterialRequests();
+                        this.loadDashboardData();
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '拒绝失败');
+                    }
+                },
+                async deleteMaterial(row) {
+                    if (confirm('确定要删除这个物料吗？删除后相关的出入库记录也会被删除。')) {
+                        try {
+                            await axios.delete(`/api/materials/${row.id}`);
+                            this.$message.success('删除成功');
+                            this.loadMaterials();
+                        } catch (err) {
+                            this.$message.error('删除失败');
+                        }
+                    }
+                },
+                async loadInboundOrders() {
+                    try {
+                        const res = await axios.get('/api/inbound');
+                        this.inboundOrders = res.data;
+                    } catch (err) {
+                        this.$message.error('加载入库单失败');
+                    }
+                },
+                openInboundDialog() {
+                    this.inboundForm = { supplier: '', remark: '', items: [] };
+                    this.loadSelectableMaterials();
+                    this.loadSuppliers();
+                    if (this.currentPage !== 'inbound') {
+                        this.currentPage = 'inbound';
+                        this.$nextTick(() => { this.showInboundDialog = true; });
+                    } else {
+                        this.showInboundDialog = true;
+                    }
+                },
+                addInboundItem() {
+                    this.inboundForm.items.push({
+                        material_id: '',
+                        quantity: 1,
+                        price: 0,
+                        batch_no: ''
+                    });
+                },
+                removeInboundItem(index) {
+                    this.inboundForm.items.splice(index, 1);
+                },
+                async refreshInventoryViews() {
+                    await Promise.allSettled([
+                        this.loadInboundOrders(),
+                        this.loadOutboundOrders(),
+                        this.loadSuppliers(),
+                        this.loadProductBatches(),
+                        this.loadCustomers(),
+                        this.loadDashboardData(),
+                        this.loadMaterials(),
+                        this.loadSelectableMaterials()
+                    ]);
+                },
+                async saveInboundOrder() {
+                    if (this.inboundForm.items.length === 0) {
+                        this.$message.error('请至少添加一个物料');
+                        return;
+                    }
+                    try {
+                        const res = await axios.post('/api/inbound', this.inboundForm);
+                        this.$message.success(res.data?.message || '入库已生效');
+                        this.showInboundDialog = false;
+                        this.inboundForm = { supplier: '', remark: '', items: [] };
+                        await this.refreshInventoryViews();
+                    } catch (err) {
+                        const detail = err.response?.data?.detail;
+                        await this.refreshInventoryViews();
+                        if (detail) {
+                            this.$message.error(detail);
+                        } else {
+                            this.$message.warning('服务器返回不稳定，已刷新数据，请以库存变化为准');
+                        }
+                    }
+                },
+                viewInboundDetails(row) {
+                    this.currentInboundOrder = row;
+                    this.showInboundDetailDialog = true;
+                },
+                async approveInbound(row) {
+                    if (confirm('确定要审批这个入库单吗？审批后库存会自动增加。')) {
+                        try {
+                            const res = await axios.post(`/api/inbound/${row.id}/approve`);
+                            const batches = res.data?.short_batches || [];
+                            this.$message.success(batches.length ? `审批成功，短批次：${batches.join('、')}` : '审批成功');
+                            this.loadInboundOrders();
+                            this.loadDashboardData();
+                        } catch (err) {
+                            this.$message.error(err.response?.data?.detail || '审批失败');
+                        }
+                    }
+                },
+                async rejectInbound(row) {
+                    const reason = prompt('请输入拒绝原因：', '');
+                    if (reason === null) {
+                        return;
+                    }
+                    try {
+                        await axios.post(`/api/inbound/${row.id}/reject`, null, { params: { reason: reason || '未填写原因' } });
+                        this.$message.success('已拒绝');
+                        this.loadInboundOrders();
+                        this.loadDashboardData();
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '拒绝失败');
+                    }
+                },
+                async loadOutboundOrders() {
+                    try {
+                        const res = await axios.get('/api/outbound');
+                        this.outboundOrders = res.data;
+                    } catch (err) {
+                        this.$message.error('加载出库单失败');
+                    }
+                },
+                openOutboundDialog() {
+                    this.outboundForm = {
+                        customer: '',
+                        outbound_type: '销售出库',
+                        product_type: '飞控板',
+                        product_model: '',
+                        product_batch_no: '',
+                        planned_quantity: 1,
+                        project_name: '',
+                        contact: '',
+                        phone: '',
+                        related_order_no: '',
+                        remark: '',
+                        items: []
+                    };
+                    this.materialBatchOptions = {};
+                    this.loadSelectableMaterials();
+                    this.loadCustomers();
+                    this.loadProductBatches();
+                    if (this.currentPage !== 'outbound') {
+                        this.currentPage = 'outbound';
+                        this.$nextTick(() => { this.showOutboundDialog = true; });
+                    } else {
+                        this.showOutboundDialog = true;
+                    }
+                },
+                openSupplementOutboundDialog(row) {
+                    this.outboundForm = {
+                        customer: row.customer || '',
+                        outbound_type: '补领出库',
+                        product_type: row.product_type || '',
+                        product_model: row.product_model || '',
+                        product_batch_no: row.product_batch_no || '',
+                        planned_quantity: 0,
+                        project_name: row.project_name || '',
+                        contact: row.contact || '',
+                        phone: row.phone || '',
+                        related_order_no: row.order_no || '',
+                        remark: '补领物料',
+                        items: []
+                    };
+                    this.materialBatchOptions = {};
+                    this.loadSelectableMaterials();
+                    this.showOutboundDialog = true;
+                },
+                addOutboundItem() {
+                    this.outboundForm.items.push({
+                        material_id: '',
+                        quantity: 1,
+                        batch_no: ''
+                    });
+                },
+                removeOutboundItem(index) {
+                    this.outboundForm.items.splice(index, 1);
+                },
+                async saveOutboundOrder() {
+                    if (!this.outboundForm.outbound_type) {
+                        this.$message.error('请选择出库类型');
+                        return;
+                    }
+                    if (this.outboundForm.outbound_type === '生产领料') {
+                        if (!this.outboundForm.product_type || !this.outboundForm.product_model.trim()) {
+                            this.$message.error('生产领料请选择产品类型并填写产品型号');
+                            return;
+                        }
+                        if (!this.outboundForm.planned_quantity || this.outboundForm.planned_quantity < 1) {
+                            this.$message.error('请填写计划数量');
+                            return;
+                        }
+                        if (this.outboundForm.items.length === 0) {
+                            this.$message.error('生产领料请至少添加一个物料');
+                            return;
+                        }
+                    } else if (this.outboundForm.outbound_type === '销售出库') {
+                        if (!this.outboundForm.customer.trim()) {
+                            this.$message.error('销售出库请选择或输入客户公司');
+                            return;
+                        }
+                        if (!this.outboundForm.product_type || !this.outboundForm.product_model.trim()) {
+                            this.$message.error('销售出库请选择产品类型并填写产品型号');
+                            return;
+                        }
+                        if (!this.outboundForm.planned_quantity || this.outboundForm.planned_quantity < 1) {
+                            this.$message.error('请填写销售数量');
+                            return;
+                        }
+                        if (this.outboundForm.items.length === 0) {
+                            this.$message.error('销售出库请添加本次用到的物料');
+                            return;
+                        }
+                    } else if (this.outboundForm.outbound_type === '补领出库') {
+                        if (!this.outboundForm.product_batch_no) {
+                            this.$message.error('补领出库需要关联原产品批次');
+                            return;
+                        }
+                        if (this.outboundForm.items.length === 0) {
+                            this.$message.error('补领出库请至少添加一个物料');
+                            return;
+                        }
+                    } else if (this.outboundForm.items.length === 0) {
+                        this.$message.error('请至少添加一个物料');
+                        return;
+                    }
+                    if (this.hasOutboundStockError) {
+                        this.$message.error('存在库存不足的物料，请调整数量后再提交');
+                        return;
+                    }
+                    try {
+                        const res = await axios.post('/api/outbound', this.outboundForm);
+                        this.$message.success(res.data?.message || '出库已生效');
+                        this.showOutboundDialog = false;
+                        this.outboundForm = {
+                            customer: '',
+                            outbound_type: '销售出库',
+                            product_type: '飞控板',
+                            product_model: '',
+                            product_batch_no: '',
+                            planned_quantity: 1,
+                            project_name: '',
+                            contact: '',
+                            phone: '',
+                            related_order_no: '',
+                            remark: '',
+                            items: []
+                        };
+                        await this.refreshInventoryViews();
+                    } catch (err) {
+                        const detail = err.response?.data?.detail;
+                        await this.refreshInventoryViews();
+                        if (detail) {
+                            this.$message.error(detail);
+                        } else {
+                            this.$message.warning('服务器返回不稳定，已刷新数据，请以库存变化为准');
+                        }
+                    }
+                },
+                viewOutboundDetails(row) {
+                    this.currentOutboundOrder = row;
+                    this.showOutboundDetailDialog = true;
+                },
+                async approveOutbound(row) {
+                    if (confirm(row.outbound_type === '销售出库' ? '确定要审批这个销售出库单吗？审批后会自动扣减配件库存，并绑定客户、产品和供应商来源。' : '确定要审批这个出库单吗？审批后库存会自动减少。')) {
+                        try {
+                            const res = await axios.post(`/api/outbound/${row.id}/approve`);
+                            this.$message.success(res.data?.message || '审批成功');
+                            this.loadOutboundOrders();
+                            this.loadDashboardData();
+                            this.loadProductBatches();
+                        } catch (err) {
+                            this.$message.error(err.response?.data?.detail || '审批失败');
+                        }
+                    }
+                },
+                async loadTrace() {
+                    try {
+                        const params = { search: (this.traceKeyword || '').trim() };
+                        const res = await axios.get('/api/trace', { params });
+                        this.traceResults = res.data;
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '加载追溯数据失败');
+                    }
+                },
+                resetTraceFilters() {
+                    this.traceKeyword = '';
+                    this.loadTrace();
+                },
+                async loadInventoryLogs() {
+                    try {
+                        const res = await axios.get('/api/inventory/logs', { params: this.inventoryFilters });
+                        this.inventoryLogs = res.data;
+                    } catch (err) {
+                        this.$message.error('加载库存流水失败');
+                    }
+                },
+                resetInventoryFilters() {
+                    this.inventoryFilters = {
+                        search: '',
+                        operation_type: '',
+                        order_no: '',
+                        batch_no: '',
+                        product_batch_no: ''
+                    };
+                    this.loadInventoryLogs();
+                },
+                async exportInventoryLedger() {
+                    try {
+                        const res = await axios.get('/api/export/inventory-ledger', {
+                            responseType: 'blob'
+                        });
+                        const url = window.URL.createObjectURL(new Blob([res.data]));
+                        const link = document.createElement('a');
+                        const disposition = res.headers['content-disposition'] || '';
+                        const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/);
+                        const filename = match ? decodeURIComponent(match[1] || match[2]) : '库存台账.xlsx';
+                        link.href = url;
+                        link.setAttribute('download', filename);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        this.$message.success('库存台账导出成功');
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '导出失败');
+                    }
+                },
+                async loadCustomers() {
+                    try {
+                        const res = await axios.get('/api/customers');
+                        this.customers = res.data;
+                    } catch (err) {
+                        this.$message.error('加载客户数据失败');
+                    }
+                },
+                editCustomer(row) {
+                    this.customerDialogTitle = '编辑客户';
+                    this.customerForm = { ...row };
+                    this.showCustomerDialog = true;
+                },
+                async saveCustomer() {
+                    try {
+                        if (this.customerForm.id) {
+                            await axios.put(`/api/customers/${this.customerForm.id}`, this.customerForm);
+                            this.$message.success('客户更新成功');
+                        } else {
+                            await axios.post('/api/customers', this.customerForm);
+                            this.$message.success('客户创建成功');
+                        }
+                        this.showCustomerDialog = false;
+                        this.loadCustomers();
+                    } catch (err) {
+                        this.$message.error(err.response.data.detail || '保存失败');
+                    }
+                },
+                async deleteCustomer(row) {
+                    if (confirm('确定要删除这个客户吗？')) {
+                        try {
+                            await axios.delete(`/api/customers/${row.id}`);
+                            this.$message.success('删除成功');
+                            this.loadCustomers();
+                        } catch (err) {
+                            this.$message.error('删除失败');
+                        }
+                    }
+                },
+                async loadUsers() {
+                    try {
+                        const res = await axios.get('/api/users');
+                        this.users = res.data;
+                    } catch (err) {
+                        this.$message.error('加载用户数据失败');
+                    }
+                },
+                async saveUser() {
+                    try {
+                        await axios.post('/api/users', null, {
+                            params: {
+                                username: this.userForm.username,
+                                password: this.userForm.password,
+                                full_name: this.userForm.full_name,
+                                role: this.userForm.role
+                            }
+                        });
+                        this.$message.success('用户创建成功');
+                        this.showUserDialog = false;
+                        this.userForm = { username: '', full_name: '', password: '', role: 'user' };
+                        this.loadUsers();
+                    } catch (err) {
+                        this.$message.error(err.response.data.detail || '创建失败');
+                    }
+                },
+                async deleteUser(row) {
+                    if (confirm('确定要删除这个用户吗？')) {
+                        try {
+                            await axios.delete(`/api/users/${row.id}`);
+                            this.$message.success('删除成功');
+                            this.loadUsers();
+                        } catch (err) {
+                            this.$message.error('删除失败');
+                        }
+                    }
+                },
+                async backupDatabase() {
+                    try {
+                        const res = await axios.get('/api/backup', {
+                            responseType: 'blob'
+                        });
+                        const url = window.URL.createObjectURL(new Blob([res.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', res.headers['content-disposition'].split('filename=')[1]);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        this.$message.success('备份成功');
+                    } catch (err) {
+                        this.$message.error('备份失败');
+                    }
+                },
+                async restoreDatabase(file) {
+                    if (!confirm('确定要用这个备份文件恢复数据吗？恢复后需要重新登录。')) {
+                        return false;
+                    }
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        await axios.post('/api/restore', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                        this.$message.success('恢复成功，请刷新页面后重新登录');
+                        this.handleLogout();
+                    } catch (err) {
+                        this.$message.error(err.response?.data?.detail || '恢复失败');
+                    }
+                    return false;
+                }
+            },
+            mounted() {
+                this.loadServerInfo();
+                const savedToken = localStorage.getItem('token');
+                if (!savedToken) {
+                    return;
+                }
+
+                this.token = savedToken;
+                axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+                axios.get('/api/users/me')
+                    .then(async (res) => {
+                        this.userRole = res.data.role;
+                        this.userName = res.data.full_name;
+                        this.isLoggedIn = true;
+                        await this.loadDashboardData();
+                        await this.loadMaterials();
+                        await this.loadSelectableMaterials();
+                        await this.loadCustomers();
+                        await this.loadProductBatches();
+                        await this.loadSuppliers();
+                    })
+                    .catch(() => {
+                        this.handleLogout();
+                        this.$message.error('登录已过期，请重新登录');
+                    });
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
