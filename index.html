@@ -270,10 +270,6 @@
                         <el-button type="primary" @click="handleLogin" style="width: 100%;">登录</el-button>
                     </el-form-item>
                 </el-form>
-                <div class="login-hint" v-if="serverInfo.url">
-                    同事访问地址：{{ serverInfo.url }}<br>
-                    默认账号：admin / 123456
-                </div>
             </div>
         </div>
         
@@ -570,9 +566,10 @@
         </el-tag>
     </template>
 </el-table-column>
-<el-table-column label="操作" width="120">
+<el-table-column label="操作" width="210">
     <template #default="scope">
         <el-button size="small" @click="viewInboundDetails(scope.row)">查看明细</el-button>
+        <el-button size="small" type="danger" @click="deleteInboundOrder(scope.row)" v-if="userRole === 'superadmin'">删除</el-button>
     </template>
 </el-table-column>
                         </el-table>
@@ -677,10 +674,11 @@
                                     </el-tag>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作" width="260">
+                            <el-table-column label="操作" width="340">
                                 <template #default="scope">
                                     <el-button size="small" @click="viewOutboundDetails(scope.row)">查看明细</el-button>
                                     <el-button size="small" type="warning" @click="openSupplementOutboundDialog(scope.row)" v-if="scope.row.status === 'approved' && scope.row.product_batch_no">补领物料</el-button>
+                                    <el-button size="small" type="danger" @click="deleteOutboundOrder(scope.row)" v-if="userRole === 'superadmin'">删除</el-button>
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -1713,6 +1711,17 @@
                         this.$message.error(err.response?.data?.detail || '拒绝失败');
                     }
                 },
+                async deleteInboundOrder(row) {
+                    if (confirm(`确定要删除入库单 ${row.order_no} 吗？删除后会扣回这笔入库库存。若该批次已被出库使用，请先删除相关出库记录。`)) {
+                        try {
+                            const res = await axios.delete(`/api/inbound/${row.id}`);
+                            this.$message.success(res.data?.message || '删除成功');
+                            await this.refreshInventoryViews();
+                        } catch (err) {
+                            this.$message.error(err.response?.data?.detail || '删除失败');
+                        }
+                    }
+                },
                 async loadOutboundOrders() {
                     try {
                         const res = await axios.get('/api/outbound');
@@ -1871,6 +1880,17 @@
                             this.loadProductBatches();
                         } catch (err) {
                             this.$message.error(err.response?.data?.detail || '审批失败');
+                        }
+                    }
+                },
+                async deleteOutboundOrder(row) {
+                    if (confirm(`确定要删除出库单 ${row.order_no} 吗？删除后会把这笔出库库存加回。`)) {
+                        try {
+                            const res = await axios.delete(`/api/outbound/${row.id}`);
+                            this.$message.success(res.data?.message || '删除成功');
+                            await this.refreshInventoryViews();
+                        } catch (err) {
+                            this.$message.error(err.response?.data?.detail || '删除失败');
                         }
                     }
                 },
